@@ -2,16 +2,16 @@
 import logging
 import tkinter as tk
 import matplotlib
-
-matplotlib.use('Agg')   # This must be loaded before pyplot!
-
 from numpy import array as numpy_array
 from datetime import datetime
 from xml.etree import ElementTree as ET
-from matplotlib import pyplot as plt
 from dateutil.parser import parse as dateparser
 from tkinter.filedialog import askopenfilename
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+matplotlib.use('Agg')   # This must be loaded before pyplot!
+from matplotlib import pyplot as plt
+
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -56,7 +56,7 @@ class Application(tk.Frame):
 
         file = tk.Menu(tearoff=0)
         file.add_command(label='Open', command=self.open_file)
-        file.add_command(label='Exit', command=lambda:exit(0))
+        file.add_command(label='Exit', command=lambda: exit(0))
         menu.add_cascade(label='File', menu=file)
         logging.debug('Completed application menu configuration')
 
@@ -68,8 +68,12 @@ class Application(tk.Frame):
         self.canvas_frame = tk.Frame(self.master)
 
         self.file_name = tk.Entry(self.options_frame, text='.. filename ..')
-        self.load_button = tk.Button(self.options_frame, text="Browse", command=self.open_file, width=10)
-        self.save_button = tk.Button(self.options_frame, text="Save", command=self.save_image, width=5)
+        self.load_button = tk.Button(
+            self.options_frame, text="Browse", command=self.open_file, width=10
+        )
+        self.save_button = tk.Button(
+            self.options_frame, text="Save", command=self.save_image, width=5
+        )
 
         self.file_name.pack(fill=tk.BOTH, expand=1, side=tk.LEFT)
         self.save_button.pack(side=tk.RIGHT)
@@ -166,7 +170,7 @@ class Application(tk.Frame):
                 numpy_array([index] * len(z_dates[index])),
                 marker='^',
                 markersize=15,
-                #color='r',  # let it auto pick for colors
+                # color='r',  # let it auto pick for colors
                 linestyle='-',
             )
             for subindex in range(len(z_dates[index])):
@@ -185,8 +189,10 @@ class Application(tk.Frame):
 
         ax.set_ylim([ymin, ymax])
 
-        locator = matplotlib.dates.MonthLocator(bymonth=[1,4,7,10])
-        self.fig.gca().yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(self.labelFormatter))
+        locator = matplotlib.dates.MonthLocator(bymonth=[1, 4, 7, 10])
+        self.fig.gca().yaxis.set_major_formatter(
+            matplotlib.ticker.FuncFormatter(self.labelFormatter)
+        )
         self.fig.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(1))
         self.fig.gca().xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%m/%d/%Y'))
         self.fig.gca().xaxis.set_major_locator(locator)
@@ -194,7 +200,8 @@ class Application(tk.Frame):
         self.canvas.draw()
 
     def parseFile(
-        self, horizon, filename, show_overdue, show_milestones, plot_image, save_file, ns="{http://schemas.microsoft.com/project}"
+        self, horizon, filename, show_overdue, show_milestones, plot_image,
+        save_file, ns="{http://schemas.microsoft.com/project}"
     ):
         skip_really_old = True
 
@@ -268,13 +275,11 @@ class Application(tk.Frame):
             if int(rollup) is not 0:
                 # Set the last_rollup to this name
                 parent_task = name
-                #parent_task = str(name).encode('utf-8')
                 continue
 
             # Also, no point looking at tasks already done
             if int(percent_complete) is 100:
                 continue
-
 
             logging.debug('Found task with further interesting details')
             task_finish = self.getElement(task, "ManualFinish", ns)
