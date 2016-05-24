@@ -1,16 +1,20 @@
+# pip install -r reqs.txt
 
 import logging
 import tkinter as tk
+import textwrap
 import matplotlib
+
 from numpy import array as numpy_array
 from datetime import datetime
 from xml.etree import ElementTree as ET
 from dateutil.parser import parse as dateparser
 from tkinter.filedialog import askopenfilename
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 matplotlib.use('Agg')   # This must be loaded before pyplot!
+
 from matplotlib import pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 class Application(tk.Frame):
@@ -69,10 +73,12 @@ class Application(tk.Frame):
 
         self.file_name = tk.Entry(self.options_frame, text='.. filename ..')
         self.load_button = tk.Button(
-            self.options_frame, text="Browse", command=self.open_file, width=10
+            self.options_frame, text="Browse",
+            command=self.open_file, width=10
         )
         self.save_button = tk.Button(
-            self.options_frame, text="Save", command=self.save_image, width=5
+            self.options_frame, text="Save",
+            command=self.save_image, width=5
         )
 
         self.file_name.pack(fill=tk.BOTH, expand=1, side=tk.LEFT)
@@ -81,15 +87,14 @@ class Application(tk.Frame):
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.canvas_frame)
         self.canvas.show()
-        self.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
+        self.canvas.get_tk_widget().pack(
+            side=tk.BOTTOM, fill=tk.BOTH, expand=1
+        )
 
         self.options_frame.pack(side=tk.TOP, fill=tk.BOTH)
         self.canvas_frame.pack(side=tk.BOTTOM)
 
     def save_image(self):
-        """
-        Save the output image to a file
-        """
         logging.info('Saving file to {s}'.format(s=self.save_file))
         self.fig.savefig(self.save_file)
 
@@ -142,14 +147,13 @@ class Application(tk.Frame):
         """
         value = int(tick_value)
         if value >= 0 and value < len(self.z_labels):
-            return self.z_labels[value]
+            label = self.z_labels[value]
+            label = textwrap.fill(label, width=16)
+            return label
         else:
             return ""
 
     def plotImage(self, z_dates, z_data, save_file):
-        """
-        Perform the actual contents plotting
-        """
         logging.info('Plotting image')
 
         ymin = 0 - float(self.ybuffer_space)
@@ -176,6 +180,7 @@ class Application(tk.Frame):
             for subindex in range(len(z_dates[index])):
                 this_date = z_dates[index][subindex]
                 txt = z_data[index][subindex]
+                txt = textwrap.fill(txt, width=28)
                 ax.annotate(
                     s=txt,
                     xy=(this_date, float(index) + 0.05),
@@ -189,13 +194,21 @@ class Application(tk.Frame):
 
         ax.set_ylim([ymin, ymax])
 
-        locator = matplotlib.dates.MonthLocator(bymonth=[1, 4, 7, 10])
+        locator = matplotlib.dates.MonthLocator(bymonth=[1, 5, 9])
         self.fig.gca().yaxis.set_major_formatter(
             matplotlib.ticker.FuncFormatter(self.labelFormatter)
         )
-        self.fig.gca().yaxis.set_major_locator(matplotlib.ticker.MultipleLocator(1))
-        self.fig.gca().xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%m/%d/%Y'))
+        self.fig.gca().yaxis.set_major_locator(
+            matplotlib.ticker.MultipleLocator(1)
+        )
+        self.fig.gca().xaxis.set_major_formatter(
+            matplotlib.dates.DateFormatter('%m/%d/%Y')
+        )
         self.fig.gca().xaxis.set_major_locator(locator)
+        self.fig.gca().xaxis.grid(True)
+
+        today = datetime.today()
+        ax.axvline(today, color='r', linestyle='--')
 
         self.canvas.draw()
 
@@ -257,6 +270,10 @@ class Application(tk.Frame):
             task_name = self.getElement(task, "Name", ns)
             if task_name is not None:
                 name = task_name.text
+            else:
+                logging.debug('Unable to get task name, skipping entry!')
+                continue
+
             logging.debug('Parsed task: {t}'.format(t=name))
 
             # Alternatively use OutlineNumber
@@ -275,13 +292,15 @@ class Application(tk.Frame):
             if int(rollup) is not 0:
                 # Set the last_rollup to this name
                 parent_task = name
+                # parent_task = str(name).encode('utf-8')
                 continue
 
             # Also, no point looking at tasks already done
             if int(percent_complete) is 100:
                 continue
 
-            logging.debug('Found task with further interesting details')
+            logging.debug('Found task with further details')
+            # Now that we found an interesting task, let's get some details
             task_finish = self.getElement(task, "ManualFinish", ns)
             if task_finish is not None:
                 finish_text = task_finish.text
@@ -334,17 +353,12 @@ class Application(tk.Frame):
             # Future items
             else:
                 future.append(out)
+        logging.debug('Reversing order of lists to match source')
+        self.z_labels = list(reversed(self.z_labels))
+        z_dates = list(reversed(z_dates))
+        z_data = list(reversed(z_data))
+
         logging.debug('Completed parsing all task information')
-
-        # # Finally show the output to requestor
-        # if show_overdue:
-        #     print("------------------------------------")
-        #     print(" OVERDUE!")
-        #     print("------------------------------------")
-        #     print()
-        #     for item in overdue:
-        #         print(item)
-
         if plot_image:
             logging.info('Plotting image contents')
             self.plotImage(z_dates, z_data, save_file)

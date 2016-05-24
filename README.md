@@ -3,6 +3,13 @@
 This utility will parse a Microsoft Project XML file and attempt to derive
 some insights into the contents.
 
+## Project File Assumptions
+There are a few assumptions that are made in regards to the layout of the
+Project file contents.
+
+* The *first* task item is expected to be a *rollup* of the various milestones
+in the remaining Project file.
+
 ## Generating the Project XML File
 The XML file is presently required instead of directly using the Microsoft
 Project file format (.MPP). In order to properly generate this file, perform

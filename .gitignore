@@ -110,3 +110,4 @@ $RECYCLE.BIN/
 
 # Ignore generated images
 *.png
+*.bak
